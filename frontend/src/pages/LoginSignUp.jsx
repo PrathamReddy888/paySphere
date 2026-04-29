@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import API_BASE_URL from "../utils/api";
 import { Helmet } from "react-helmet-async";
 
 const GoogleIcon = () => (
@@ -42,7 +43,7 @@ export default function PaySphereLogin() {
       : { email, password };
 
     try {
-      const response = await axios.post(`http://localhost:5000/api/auth${endpoint}`, payload);
+      const response = await axios.post(`${API_BASE_URL}/api/auth${endpoint}`, payload);
       
       const { token, companyName: savedCompanyName } = response.data;
       
