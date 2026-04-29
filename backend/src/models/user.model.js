@@ -18,6 +18,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  defaultOvertimeRate: {
+    type: Number,
+    default: 0,
+  },
+  defaultDailyRate: {
+    type: Number,
+    default: 0,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

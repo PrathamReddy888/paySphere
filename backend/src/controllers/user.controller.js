@@ -47,3 +47,41 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+// GET USER SETTINGS
+exports.getSettings = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({
+      defaultOvertimeRate: user.defaultOvertimeRate || 0,
+      defaultDailyRate: user.defaultDailyRate || 0
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// UPDATE USER SETTINGS
+exports.updateSettings = async (req, res) => {
+  try {
+    const { defaultOvertimeRate, defaultDailyRate } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { defaultOvertimeRate, defaultDailyRate },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Settings updated successfully",
+      settings: {
+        defaultOvertimeRate: user.defaultOvertimeRate,
+        defaultDailyRate: user.defaultDailyRate
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
