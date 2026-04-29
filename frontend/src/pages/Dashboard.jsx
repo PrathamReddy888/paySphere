@@ -351,7 +351,7 @@ export default function PaySphereDashboard() {
               onClick={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("companyName");
-                navigate("/auth");
+                navigate("/");
               }}
               className="px-3 py-1.5 text-sm font-semibold text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition"
             >

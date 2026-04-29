@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import axios from "axios";
+import API_BASE_URL from "../utils/api";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const GridIcon = () => (
@@ -104,7 +105,7 @@ export default function AddEmployee() {
   useEffect(() => {
     const fetchRecent = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/employees/recent", {
+        const res = await axios.get(`${API_BASE_URL}/api/employees/recent`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setRecentEmployees(res.data.employees);
@@ -126,7 +127,7 @@ export default function AddEmployee() {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/employees",
+        `${API_BASE_URL}/api/employees`,
         {
           fullName,
           monthlySalary: Number(monthlySalary.replace(/,/g, "")),
