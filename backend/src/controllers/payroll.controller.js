@@ -1,5 +1,6 @@
 const Employee = require("../models/employee.model");
 const PayrollUpdate = require("../models/payroll.model");
+const User = require("../models/user.model");
 
 // Helper: parse tag labels back into structured numbers
 function parseTagValue(label) {
@@ -25,6 +26,9 @@ exports.finalizePayroll = async (req, res) => {
     if (employees.length === 0) {
       return res.status(400).json({ message: "No employees found. Add employees first." });
     }
+
+    // Fetch user settings for default rates
+    const user = await User.findById(req.userId);
 
     const results = [];
     const errors = [];
@@ -62,9 +66,15 @@ exports.finalizePayroll = async (req, res) => {
 
       // Calculate salary adjustments
       const baseSalary = employee.monthlySalary;
-      const dailyRate = baseSalary / 30;
+      
+      // Use user default daily rate if available, otherwise fallback to salary/30
+      const dailyRate = (user && user.defaultDailyRate) || (baseSalary / 30);
       const leaveDeduction = Math.round(dailyRate * leaveDays);
-      const overtimePay = Math.round((employee.overtimeRate || 0) * overtimeHours);
+      
+      // Use employee's overtime rate if set, otherwise use user default, otherwise 0
+      const overtimeRate = employee.overtimeRate || (user && user.defaultOvertimeRate) || 0;
+      const overtimePay = Math.round(overtimeRate * overtimeHours);
+      
       const netSalary = baseSalary - leaveDeduction + overtimePay + bonus - deductions;
 
       // Upsert payroll record (update if exists for same employee/month)

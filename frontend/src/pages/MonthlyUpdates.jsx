@@ -194,6 +194,9 @@ export default function MonthlyUpdates() {
   const [showResults, setShowResults] = useState(false);
   const [payrollResults, setPayrollResults] = useState(null);
   const [finalizeError, setFinalizeError] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState({ defaultOvertimeRate: 0, defaultDailyRate: 0 });
+  const [updatingSettings, setUpdatingSettings] = useState(false);
   const companyName = localStorage.getItem("companyName") || "Acme Corp";
   const token = localStorage.getItem("token");
 
@@ -214,6 +217,35 @@ export default function MonthlyUpdates() {
     if (token) fetchEmployees();
     else setLoadingEmployees(false);
   }, [token]);
+
+  // Fetch settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/auth/settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSettings(res.data);
+      } catch (err) {
+        console.error("Failed to fetch settings:", err);
+      }
+    };
+    if (token) fetchSettings();
+  }, [token]);
+
+  const saveSettings = async () => {
+    setUpdatingSettings(true);
+    try {
+      await axios.put(`${API_BASE_URL}/api/auth/settings`, settings, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setShowSettings(false);
+    } catch (err) {
+      alert("Failed to save settings");
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
 
   const getCompInitials = (name) =>
     name
@@ -357,12 +389,15 @@ export default function MonthlyUpdates() {
           {[
             { id:"dashboard",  label:"Dashboard",  icon:<GridIcon /> },
             { id:"employees",  label:"Employees",  icon:<PeopleIcon /> },
+            { id:"settings",   label:"Payroll Settings", icon:<SpeedoIcon /> },
           ].map(item => (
             <button key={item.id} className="nav-btn"
               onClick={() => {
                 setIsSidebarOpen(false); // Close on selection on mobile
                 if (item.id === "dashboard" || item.id === "employees") {
                   navigate("/dashboard");
+                } else if (item.id === "settings") {
+                  setShowSettings(true);
                 } else {
                   setActivePage(item.id);
                 }
@@ -665,6 +700,58 @@ export default function MonthlyUpdates() {
               >{finalizing ? "Processing..." : "Review & Finalize"}</button>
             </div>
           </div>
+
+          {/* Settings Modal */}
+          {showSettings && (
+            <div className="modal-overlay" onClick={() => setShowSettings(false)}>
+              <div className="modal-box" style={{ maxWidth: 450 }} onClick={e => e.stopPropagation()}>
+                <div style={{ padding:"28px 28px 20px", borderBottom:"1.5px solid #F0F1F3" }}>
+                  <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:24, fontWeight:400, color:"#111827" }}>
+                    Payroll Settings
+                  </h2>
+                  <p style={{ fontSize:14, color:"#6B7280" }}>Set default rates for all employees.</p>
+                </div>
+                
+                <div style={{ padding:"24px 28px" }}>
+                  <label style={{ display:"block", marginBottom:20 }}>
+                    <span style={{ fontSize:11, fontWeight:700, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8, display:"block" }}>
+                      Default Overtime Rate (₹ / hr)
+                    </span>
+                    <input 
+                      type="number"
+                      value={settings.defaultOvertimeRate}
+                      onChange={(e) => setSettings({ ...settings, defaultOvertimeRate: parseFloat(e.target.value) || 0 })}
+                      style={{ width:"100%", padding:"12px 16px", background:"#F3F4F6", border:"1.5px solid transparent", borderRadius:12, fontSize:15, fontWeight:600, color:"#111827", outline:"none" }}
+                    />
+                  </label>
+
+                  <label style={{ display:"block", marginBottom:8 }}>
+                    <span style={{ fontSize:11, fontWeight:700, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8, display:"block" }}>
+                      Default Daily Deduction (₹ / day)
+                    </span>
+                    <input 
+                      type="number"
+                      value={settings.defaultDailyRate}
+                      onChange={(e) => setSettings({ ...settings, defaultDailyRate: parseFloat(e.target.value) || 0 })}
+                      style={{ width:"100%", padding:"12px 16px", background:"#F3F4F6", border:"1.5px solid transparent", borderRadius:12, fontSize:15, fontWeight:600, color:"#111827", outline:"none" }}
+                    />
+                  </label>
+                  <p style={{ fontSize:12, color:"#9CA3AF", fontStyle:"italic" }}>
+                    * Individual employee overtime rates will still take priority if set.
+                  </p>
+                </div>
+
+                <div style={{ padding:"16px 28px 24px", borderTop:"1.5px solid #F0F1F3", display:"flex", gap:12, justifyContent:"flex-end" }}>
+                  <button onClick={() => setShowSettings(false)} className="chip-btn" style={{ borderRadius:10 }}>Cancel</button>
+                  <button onClick={saveSettings} disabled={updatingSettings} style={{
+                    padding:"11px 24px", borderRadius:10, border:"none", background:"#2563EB", color:"white", fontWeight:700, cursor: updatingSettings ? "not-allowed" : "pointer"
+                  }}>
+                    {updatingSettings ? "Saving..." : "Save Settings"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Payroll Results Modal */}
           {showResults && payrollResults && (

@@ -91,6 +91,9 @@ export default function AddEmployee() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState({ defaultOvertimeRate: 0, defaultDailyRate: 0 });
+  const [updatingSettings, setUpdatingSettings] = useState(false);
 
   // Recently added employees
   const [recentEmployees, setRecentEmployees] = useState([]);
@@ -118,6 +121,35 @@ export default function AddEmployee() {
     if (token) fetchRecent();
     else setLoadingRecent(false);
   }, [token]);
+
+  // Fetch settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/auth/settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSettings(res.data);
+      } catch (err) {
+        console.error("Failed to fetch settings:", err);
+      }
+    };
+    if (token) fetchSettings();
+  }, [token]);
+
+  const saveSettings = async () => {
+    setUpdatingSettings(true);
+    try {
+      await axios.put(`${API_BASE_URL}/api/auth/settings`, settings, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setShowSettings(false);
+    } catch (err) {
+      alert("Failed to save settings");
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -158,6 +190,7 @@ export default function AddEmployee() {
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: <GridIcon />, path: "/dashboard" },
     { id: "employees", label: "Employees", icon: <PeopleIcon />, path: "/add-employee" },
+    { id: "settings", label: "Payroll Settings", icon: <SupportIcon />, path: "#" },
   ];
 
   return (
@@ -200,7 +233,11 @@ export default function AddEmployee() {
             <button
               key={item.id}
               onClick={() => {
-                navigate(item.path);
+                if (item.id === "settings") {
+                  setShowSettings(true);
+                } else {
+                  navigate(item.path);
+                }
                 setIsSidebarOpen(false);
               }}
               className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition ${
@@ -413,6 +450,48 @@ export default function AddEmployee() {
 
           </div>
         </main>
+
+        {/* Settings Modal */}
+        {showSettings && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] backdrop-blur-sm" onClick={() => setShowSettings(false)}>
+            <div className="bg-white rounded-2xl w-[92%] max-w-[450px] overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="p-7 border-b border-gray-100">
+                <h2 className="text-2xl font-bold text-gray-900">Payroll Settings</h2>
+                <p className="text-sm text-gray-500 mt-1">Set default rates for all employees.</p>
+              </div>
+              
+              <div className="p-7 space-y-6">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider mb-2 block">Default Overtime Rate (₹ / hr)</span>
+                  <input 
+                    type="number"
+                    value={settings.defaultOvertimeRate}
+                    onChange={(e) => setSettings({ ...settings, defaultOvertimeRate: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-100 text-gray-900 font-semibold focus:bg-white focus:ring-2 focus:ring-blue-500/20 border border-transparent outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider mb-2 block">Default Daily Deduction (₹ / day)</span>
+                  <input 
+                    type="number"
+                    value={settings.defaultDailyRate}
+                    onChange={(e) => setSettings({ ...settings, defaultDailyRate: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-100 text-gray-900 font-semibold focus:bg-white focus:ring-2 focus:ring-blue-500/20 border border-transparent outline-none transition"
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-100 flex gap-3 justify-end">
+                <button onClick={() => setShowSettings(false)} className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+                <button onClick={saveSettings} disabled={updatingSettings} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition disabled:opacity-50">
+                  {updatingSettings ? "Saving..." : "Save Settings"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
