@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import API_BASE_URL from "../utils/api";
 import { Helmet } from "react-helmet-async";
-import { useGoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin} from "@react-oauth/google";
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 48 48">
