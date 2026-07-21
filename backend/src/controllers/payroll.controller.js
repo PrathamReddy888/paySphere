@@ -170,8 +170,10 @@ exports.exportPayrollCSV = async (req, res) => {
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename=payroll-${month}-${year}.csv`);
     res.status(200).send(csvData);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+  }catch (error){
+    res.status(500).json({ message: "Server error", error: error.message
+  })};
+}
 const { sendPayslipEmail } = require("../services/email.service");
 
 // SEND PAYSLIP EMAIL manually
@@ -199,4 +201,4 @@ exports.sendPayslipEmailHandler = async (req, res) => {
     console.error("Manual email error:", error);
     res.status(500).json({ message: "Server error while sending email", error: error.message });
   }
-};
+}
